@@ -1,0 +1,64 @@
+#+TITLE: tts.el - Text-to-Speech (TTS) in Emacs
+
+This package provides Text-to-Speech (TTS) functionality for Emacs, enabling
+users to convert textual content into audio playback. It supports streaming TTS
+by splitting text into sentences and processing them sequentially, allowing for
+smooth audio generation and playback without blocking Emacs.
+
+** Usage
+
+To use this package, first ensure the required external dependencies are
+available: a TTS backend server (by default, Kokoro running in a Podman
+container) and an audio player (by default, ffplay). Start the backend server
+using ~tts-kokoro-start-server~, which launches a local Kokoro TTS service on
+the configured port (~tts-kokoro-port~ - default 8880).
+
+Turn ~tts-mode~ on to have UI controls and playback information on the
+header-line of the buffer. Select text in a buffer and call ~tts-read~ to
+initiate TTS playback; it handles the entire region or buffer if no region is
+active.  Stop ongoing playback with ~tts-stop~.  Customize voices and speed
+using ~tts-kokoro-set-voice~ and ~tts-kokoro-set-speed~; prefix arguments make
+settings buffer-local. Customize the port via ~tts-kokoro-port~.  Logs and
+process outputs appear in the ~*tts-log*~ buffer for debugging.
+
+** Extension
+
+To extend this package, add new backends by defining generation functions (e.g.,
+like ~tts--kokoro-generate-audio~) and updating
+~tts-backend-generate-function-alist~. Similarly, for frontends, define playback
+functions (e.g., like ~tts--ffplay-play-audio~) and update
+~tts-frontend-play-function-alist~. Ensure new backends and frontends implement
+the expected callback interface for asynchronous processing.  For
+backend-specific UI controls in the header line, define a UI function (e.g.,
+like ~tts--kokoro-ui-controls~) and update
+~tts-backend-ui-controls-function-alist~. For preprocessing, define
+transformation functions (e.g., like ~tts--preprocess-org-links~) and add them
+to ~tts-preprocessing-functions~.  These apply per sentence before TTS
+generation.
+
+** Links
+
+You can find more information about Kokoro in this URL: https://huggingface.co/hexgrad/Kokoro-82M
+
+And its packaging into a container is provided by: https://github.com/remsky/Kokoro-FastAPI
+
+** Installation
+
+Download ~tts.el~ and place it in your ~load-path~.
+
+Alternatively, follow your package manager instructions to add a GitHub recipe.
+
+** License
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
