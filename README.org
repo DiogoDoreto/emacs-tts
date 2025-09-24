@@ -5,6 +5,8 @@ users to convert textual content into audio playback. It supports streaming TTS
 by splitting text into sentences and processing them sequentially, allowing for
 smooth audio generation and playback without blocking Emacs.
 
+[[https://github.com/user-attachments/assets/c5dd8fa8-80d5-48a3-b5c0-bfacc6bf8e04][TTS demo video]]
+
 ** Usage
 
 To use this package, first ensure the required external dependencies are
