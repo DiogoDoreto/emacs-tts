@@ -174,6 +174,7 @@ Each log STRING is prefixed with the PROC process name."
 
 ;;; Backend: kokoro
 
+;;;###autoload
 (defun tts-kokoro-start-server ()
   "Start Kokoro TTS server using Podman on the configured port."
   (interactive)
@@ -496,6 +497,7 @@ Will stop the current chunk if it's playing."
 
 ;;; tts-mode
 
+;;;###autoload
 (define-minor-mode tts-mode
   "Toggle TTS header-line display."
   :init-value nil
@@ -576,6 +578,7 @@ Will stop the current chunk if it's playing."
 
 ;;; Interactive functions
 
+;;;###autoload
 (defun tts-read ()
   "Start a new TTS session for the selected region or the entire buffer.
 The text is split into sentences and played sequentially as audio chunks become
