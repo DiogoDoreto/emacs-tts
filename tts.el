@@ -1,11 +1,12 @@
-;;; tts.el --- Text-to-Speech (TTS) in Emacs -*- lexical-binding: t; -*-
+;;; tts.el --- Text-to-Speech (TTS) -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 Diogo Doreto
 
 ;; Author: Diogo Doreto <diogo@doreto.com.br>
+;; Version: 1.0.0
 ;; Keywords: convenience languages multimedia tools
 ;; Homepage: https://github.com/DiogoDoreto/emacs-tts
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "29.1"))
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
