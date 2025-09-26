@@ -131,7 +131,7 @@ Each function takes a string (sentence text) and returns the transformed string.
   :type '(repeat function)
   :group 'tts)
 
-(defface tts-highlight-face
+(defface tts-highlight
   '((t (:inherit highlight)))
   "Face for highlighting sentences being spoken by TTS."
   :group 'tts)
@@ -459,7 +459,7 @@ stopped."
       (setf (tts--chunk-status chunk) 'playing
             (tts--chunk-overlay chunk) (when (and tts-enable-highlighting (buffer-live-p buffer) beg end)
                                          (let ((overlay (make-overlay beg end buffer)))
-                                           (overlay-put overlay 'face 'tts-highlight-face)
+                                           (overlay-put overlay 'face 'tts-highlight)
                                            overlay))
             (tts--chunk-audio-proc chunk) (funcall play-function file callback))
       ;; Ensure the playing chunk is visible in its window if possible
