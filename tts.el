@@ -27,8 +27,7 @@
 ;; This package provides Text-to-Speech (TTS) functionality for Emacs, enabling
 ;; users to convert textual content into audio playback. It supports streaming
 ;; TTS by splitting text into sentences and processing them sequentially,
-;; allowing for smooth, real-time audio generation and playback without blocking
-;; Emacs.
+;; allowing for smooth audio generation and playback without blocking Emacs.
 
 ;; To use this package, first ensure the required external dependencies are
 ;; available: a TTS backend server (by default, Kokoro running in a Podman
@@ -81,8 +80,8 @@
 
 (defcustom tts-backend-ui-controls-function-alist
   '((kokoro . tts--kokoro-ui-controls))
-  "Alist mapping backends to their UI controls rendering functions for the
-header line. The function must return a string."
+  "Alist mapping backends to their UI controls rendering functions.
+The function must return a string which will be placed on the header line."
   :type '(alist :key-type symbol :value-type function)
   :group 'tts)
 
@@ -128,7 +127,6 @@ header line. The function must return a string."
 
 (defcustom tts-preprocessing-functions '(tts--preprocess-org-links)
   "List of functions to preprocess TTS text per sentence.
-
 Each function takes a string (sentence text) and returns the transformed string."
   :type '(repeat function)
   :group 'tts)
@@ -157,14 +155,14 @@ Each function takes a string (sentence text) and returns the transformed string.
 ;;; Log helpers
 
 (defun tts--log (prefix string)
-  "Log a message with PREFIX to the TTS log buffer."
+  "Log a message STRING with PREFIX to the TTS log buffer."
   (with-current-buffer (get-buffer-create "*tts-log*")
     (goto-char (point-max))
     (insert (format "[%s] %s\n" prefix string))))
 
 (defun tts--logger-insertion-filter  (proc string)
-  "Process filter that inserts logged strings into the process buffer, prefixed
-with the process name."
+  "Process filter that insert logged strings into the process buffer.
+Each log STRING is prefixed with the PROC process name."
   (when (buffer-live-p (process-buffer proc))
     (with-current-buffer (process-buffer proc)
       (let ((moving (= (point) (process-mark proc))))
@@ -246,8 +244,8 @@ with the process name."
     (tts--update-header-line)))
 
 (defun tts--kokoro-generate-audio (text file callback)
-  "Generate audio for TEXT using the Kokoro TTS backend, saving to FILE. Call
-CALLBACK with error or nil when done."
+  "Generate audio for TEXT using the Kokoro TTS backend, saving to FILE.
+Call CALLBACK with error or nil when done."
   (let* ((speech-url (format "http://localhost:%s/v1/audio/speech" tts-kokoro-port))
          (payload (json-encode
                    `(("model" . "kokoro")
@@ -285,8 +283,8 @@ CALLBACK with error or nil when done."
 ;;; Frontend: ffplay
 
 (defun tts--ffplay-play-audio (file callback)
-  "Play the audio FILE using ffplay. Call CALLBACK with error or nil when
-playback finishes."
+  "Play the audio FILE using ffplay.
+Call CALLBACK with error or nil when playback finishes."
   (make-process
    :name "tts-ffplay"
    :command (list "ffplay" "-nodisp" "-autoexit" "-v" "level+error" file)
@@ -330,7 +328,7 @@ playback finishes."
   (chunks nil :type vector :documentation "Vector of `tts--chunk'."))
 
 (defun tts--current-session-active-p ()
-  "Returns t when a current session exists and it has not been stopped."
+  "Return t when a current session exists and it has not been stopped."
   (and tts--current-session
        (not (eq (tts--session-status tts--current-session) 'stopped))))
 
@@ -339,6 +337,7 @@ playback finishes."
   (aref (tts--session-chunks tts--current-session) index))
 
 (defun tts--current-chunk ()
+  "Return the current chunk of the current session."
   (when tts--current-session
     (when-let ((current-index (tts--session-current-chunk-index tts--current-session)))
       (tts--session-chunk current-index))))
@@ -346,13 +345,13 @@ playback finishes."
 ;;; Pre-processing
 
 (defun tts--preprocess-org-links (text)
-  "Replace org-mode links [[url][description]] with description in TEXT."
+  "Replace `org-mode' links [[url][description]] with description in TEXT."
   (replace-regexp-in-string (rx "[[" (+? nonl) "][" (group (+? nonl)) "]")
                             "\\1" text))
 
 (defun tts--split-into-sentences (beg end)
-  "Split the text between BEG and END into a list of (text beg end) triples for
-each sentence."
+  "Split the text between BEG and END into a list of sentences.
+Each sentence if returned as (text beg end)."
   (let (sentences)
     (save-excursion
       (goto-char beg)
@@ -379,8 +378,9 @@ each sentence."
 ;;; Processing
 
 (defun tts--session-maybe-request-next-chunk ()
-  "Request the next pending chunk in the current session if no chunk is
-currently being requested and the session is not stopped."
+  "Request the next pending chunk in the current session.
+Ensures that no chunk is currently being requested and the session is not
+stopped."
   (when (tts--current-session-active-p)
     (cl-loop for chunk across (tts--session-chunks tts--current-session)
              for status = (tts--chunk-status chunk)
@@ -483,8 +483,8 @@ currently being requested and the session is not stopped."
      (setf (tts--chunk-status chunk) 'ready))))
 
 (defun tts--play-chunk-at (index)
-  "Plays the chunk at INDEX as long as it's ready. Will stop the current chunk
-if it's playing."
+  "Plays the chunk at INDEX as long as it's ready.
+Will stop the current chunk if it's playing."
   (let ((chunk (tts--session-chunk index)))
     (when-let ((current-chunk (tts--current-chunk)))
       (when (eq (tts--chunk-status current-chunk) 'playing)
@@ -516,8 +516,7 @@ if it's playing."
     (remove-hook 'post-command-hook #'tts--check-region-change t)))
 
 (defun tts--check-region-change ()
-  "Check if the region selection status has changed and update header-line if
-necessary."
+  "Update header-line when the region selection status has changed."
   (let ((active (use-region-p)))
     (when (and tts-mode (not (eq active tts--region-active-p)))
       (setq tts--region-active-p active)
@@ -569,7 +568,7 @@ necessary."
             right-part))))
 
 (defun tts--update-header-line ()
-  "Update the header-line in all buffers where tts-mode is active."
+  "Update the header-line in all buffers where `tts-mode' is active."
   (dolist (buf (buffer-list))
     (with-current-buffer buf
       (when tts-mode
@@ -578,9 +577,9 @@ necessary."
 ;;; Interactive functions
 
 (defun tts-read ()
-  "Start a new TTS session for the selected region or the entire buffer if no
-region is active.  The text is split into sentences and played sequentially as
-audio chunks become available."
+  "Start a new TTS session for the selected region or the entire buffer.
+The text is split into sentences and played sequentially as audio chunks become
+available."
   (interactive)
   (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
          (end (if (use-region-p) (region-end) (point-max)))
@@ -588,7 +587,7 @@ audio chunks become available."
     (when (use-region-p)
       (deactivate-mark))
     (unless sentences
-      (user-error "TTS: No text to speak."))
+      (user-error "TTS: No text to speak"))
     (tts-stop)
     (setq tts--current-session (tts--session-create sentences (current-buffer)))
     (message "TTS: Session %s started with %d chunk(s)."
