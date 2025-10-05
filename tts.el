@@ -35,14 +35,15 @@
 ;; using `tts-kokoro-start-server', which launches a local Kokoro TTS service on
 ;; the configured port (`tts-kokoro-port' - default 8880).  Select text in a
 ;; buffer and call `tts-read' to initiate TTS playback; it handles the entire
-;; region or buffer if no region is active.  Stop ongoing playback with
-;; `tts-stop'.  Customize voices and speed using `tts-kokoro-set-voice' and
-;; `tts-kokoro-set-speed'; prefix arguments make settings buffer-local.
-;; Customize the port via `tts-kokoro-port'.  Logs and process outputs appear in
-;; the *tts-log* buffer for debugging.  If `tts-enable-automode' is non-nil (the
-;; default), `tts-mode' will be automatically enabled when starting playback to
-;; display a header-line with progress and controls. Otherwise, you can manually
-;; enable `tts-mode' if desired.
+;; region or buffer if no region is active. You may also provide a string
+;; argument to it instead.  Stop ongoing playback with `tts-stop'.  Customize
+;; voices and speed using `tts-kokoro-set-voice' and `tts-kokoro-set-speed';
+;; prefix arguments make settings buffer-local.  Customize the port via
+;; `tts-kokoro-port'.  Logs and process outputs appear in the *tts-log* buffer
+;; for debugging.  If `tts-enable-automode' is non-nil (the default), `tts-mode'
+;; will be automatically enabled when starting playback to display a header-line
+;; with progress and controls. Otherwise, you can manually enable `tts-mode' if
+;; desired.
 
 ;; To extend this package, add new backends by defining generation functions
 ;; (e.g., like `tts--kokoro-generate-audio') and updating
@@ -585,26 +586,32 @@ Will stop the current chunk if it's playing."
 ;;; Interactive functions
 
 ;;;###autoload
-(defun tts-read ()
-  "Start a new TTS session for the selected region or the entire buffer.
+(defun tts-read (&optional text)
+  "Read out loud the provided TEXT, the selected region, or the entire buffer.
 The text is split into sentences and played sequentially as audio chunks become
 available."
   (interactive)
-  (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
-         (end (if (use-region-p) (region-end) (point-max)))
-         (sentences (tts--split-into-sentences beg end)))
-    (when (use-region-p)
-      (deactivate-mark))
-    (unless sentences
-      (user-error "TTS: No text to speak"))
-    (tts-stop)
-    (setq tts--current-session (tts--session-create sentences (current-buffer)))
-    (message "TTS: Session %s started with %d chunk(s)."
-             (tts--session-id tts--current-session)
-             (length (tts--session-chunks tts--current-session)))
-    (tts--session-maybe-request-next-chunk)
-    (cond (tts-mode (tts--update-header-line))
-          (tts-enable-automode (tts-mode 1)))))
+  (save-current-buffer
+    (when text
+      (set-buffer (get-buffer-create "*tts-read*"))
+      (setq-local tts-enable-automode t)
+      (erase-buffer)
+      (insert text))
+    (let* ((beg (if (use-region-p) (region-beginning) (point-min)))
+           (end (if (use-region-p) (region-end) (point-max)))
+           (sentences (tts--split-into-sentences beg end)))
+      (when (use-region-p)
+        (deactivate-mark))
+      (unless sentences
+        (user-error "TTS: No text to speak"))
+      (tts-stop)
+      (setq tts--current-session (tts--session-create sentences (current-buffer)))
+      (message "TTS: Session %s started with %d chunk(s)."
+               (tts--session-id tts--current-session)
+               (length (tts--session-chunks tts--current-session)))
+      (tts--session-maybe-request-next-chunk)
+      (cond (tts-mode (tts--update-header-line))
+            (tts-enable-automode (tts-mode 1))))))
 
 (defun tts-stop ()
   "Stop the current TTS session if one is active."
