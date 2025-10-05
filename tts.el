@@ -39,9 +39,10 @@
 ;; `tts-stop'.  Customize voices and speed using `tts-kokoro-set-voice' and
 ;; `tts-kokoro-set-speed'; prefix arguments make settings buffer-local.
 ;; Customize the port via `tts-kokoro-port'.  Logs and process outputs appear in
-;; the *tts-log* buffer for debugging.  When you start playing, `tts-mode' will
-;; be enabled in that buffer to display a header-line showing playback progress
-;; and controls.
+;; the *tts-log* buffer for debugging.  If `tts-enable-automode' is non-nil (the
+;; default), `tts-mode' will be automatically enabled when starting playback to
+;; display a header-line with progress and controls. Otherwise, you can manually
+;; enable `tts-mode' if desired.
 
 ;; To extend this package, add new backends by defining generation functions
 ;; (e.g., like `tts--kokoro-generate-audio') and updating
@@ -143,6 +144,11 @@ Each function takes a string (sentence text) and returns the transformed string.
 
 (defcustom tts-enable-autoscroll t
   "Enable automatic scroll of the buffer window to keep spoken text visible."
+  :type 'boolean
+  :group 'tts)
+
+(defcustom tts-enable-automode t
+  "Automatically enable tts-mode when starting TTS playback."
   :type 'boolean
   :group 'tts)
 
@@ -597,9 +603,8 @@ available."
              (tts--session-id tts--current-session)
              (length (tts--session-chunks tts--current-session)))
     (tts--session-maybe-request-next-chunk)
-    (if tts-mode
-        (tts--update-header-line)
-      (tts-mode 1))))
+    (cond (tts-mode (tts--update-header-line))
+          (tts-enable-automode (tts-mode 1)))))
 
 (defun tts-stop ()
   "Stop the current TTS session if one is active."
