@@ -154,7 +154,7 @@ Each function takes a string (sentence text) and returns the transformed string.
   :group 'tts)
 
 (defcustom tts-enable-automode t
-  "Automatically enable tts-mode when starting TTS playback."
+  "Automatically enable `tts-mode' when starting TTS playback."
   :type 'boolean
   :group 'tts)
 
@@ -211,7 +211,7 @@ Each log STRING is prefixed with the PROC process name."
                            (run-at-time 1 nil check-status)))))
            (check-status (lambda ()
                            (when (< timeout (- (float-time) start-time))
-                             (user-error "Kokoro TTS server timed out."))
+                             (user-error "Kokoro TTS server timed out"))
                            (url-retrieve status-url callback nil t t))))
     (run-at-time 2 nil check-status)))
 
