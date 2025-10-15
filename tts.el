@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Diogo Doreto
 
 ;; Author: Diogo Doreto <diogo@doreto.com.br>
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Keywords: convenience languages multimedia tools
 ;; Homepage: https://github.com/DiogoDoreto/emacs-tts
 ;; Package-Requires: ((emacs "29.1"))
@@ -63,6 +63,10 @@
 ;; https://huggingface.co/hexgrad/Kokoro-82M
 ;; And its packaging into a container is provided by:
 ;; https://github.com/remsky/Kokoro-FastAPI
+
+;;; Changelog:
+
+;; - 1.1.0: Write on the minibuffer when Kokoro server has started.
 
 ;;; Code:
 
@@ -186,6 +190,7 @@ Each log STRING is prefixed with the PROC process name."
 (defun tts-kokoro-start-server ()
   "Start Kokoro TTS server using Podman on the configured port."
   (interactive)
+  (message "Kokoro TTS server is starting...")
   (make-process
    :name "kokoro-server"
    :command `("podman" "run" "--replace" "--name" "kokoro-tts" "-d"
@@ -193,7 +198,22 @@ Each log STRING is prefixed with the PROC process name."
               "ghcr.io/remsky/kokoro-fastapi-cpu:latest")
    :noquery t
    :buffer (get-buffer-create "*tts-log*")
-   :filter #'tts--logger-insertion-filter))
+   :filter #'tts--logger-insertion-filter)
+  (letrec ((timeout 30.0)
+           (start-time (float-time))
+           (status-url (format "http://localhost:%s/health" tts-kokoro-port))
+           (callback (lambda (_status)
+                       (goto-char (point-min))
+                       (let ((success (re-search-forward "^HTTP/.+ 200" nil t)))
+                         (kill-buffer (current-buffer))
+                         (if success
+                             (message "Kokoro TTS server started.")
+                           (run-at-time 1 nil check-status)))))
+           (check-status (lambda ()
+                           (when (< timeout (- (float-time) start-time))
+                             (user-error "Kokoro TTS server timed out."))
+                           (url-retrieve status-url callback nil t t))))
+    (run-at-time 2 nil check-status)))
 
 (defun tts--kokoro-format-voice (voice)
   "Format VOICE into a display string."
