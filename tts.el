@@ -81,13 +81,14 @@
   :type 'string
   :group 'tts)
 
-(defcustom tts-backend 'kokoro
+(defcustom tts-backend (if (eq system-type 'darwin) 'say 'kokoro)
   "The TTS backend currently in use for generating audio from text."
   :type 'symbol
   :group 'tts)
 
 (defcustom tts-backend-generate-function-alist
-  '((kokoro . tts--kokoro-generate-audio))
+  '((kokoro . tts--kokoro-generate-audio)
+    (say . tts--say-generate-audio))
   "Alist mapping backends to their audio generation functions."
   :type '(alist :key-type symbol :value-type function)
   :group 'tts)
@@ -315,6 +316,22 @@ Call CALLBACK with error or nil when done."
    (buttonize (format "[Speed: %s]" tts-kokoro-speed)
               (lambda (_) (let ((current-prefix-arg '(4))) (call-interactively #'tts-kokoro-set-speed)))
               nil "Change TTS speed")))
+
+;;; Backend: say (macOS)
+
+(defun tts--say-generate-audio (text file callback)
+  "Generate audio for TEXT using the say macOS backend, saving to FILE.
+Call CALLBACK with error or nil when done."
+  (make-process
+   :name "tts-say"
+   :command (list "say" "-o" file text)
+   :noquery t
+   :buffer (get-buffer-create "*tts-log*")
+   :filter #'tts--logger-insertion-filter
+   :sentinel (lambda (_proc event)
+               (funcall callback
+                        (unless (string= event "finished\n")
+                          (string-trim event))))))
 
 ;;; Frontend: ffplay
 
