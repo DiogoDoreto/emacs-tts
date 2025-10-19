@@ -302,11 +302,11 @@ Call CALLBACK with error or nil when done."
   "Return a string of UI controls for the Kokoro TTS backend."
   (concat
    (buttonize (format "[Voice: %s]" tts-kokoro-voice)
-              (lambda (_) (let ((current-prefix-arg '(4))) (call-interactively 'tts-kokoro-set-voice)))
+              (lambda (_) (let ((current-prefix-arg '(4))) (call-interactively #'tts-kokoro-set-voice)))
               nil "Change TTS voice")
    " "
    (buttonize (format "[Speed: %s]" tts-kokoro-speed)
-              (lambda (_) (let ((current-prefix-arg '(4))) (call-interactively 'tts-kokoro-set-speed)))
+              (lambda (_) (let ((current-prefix-arg '(4))) (call-interactively #'tts-kokoro-set-speed)))
               nil "Change TTS speed")))
 
 ;;; Frontend: ffplay
