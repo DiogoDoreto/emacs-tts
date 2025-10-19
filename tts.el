@@ -3,7 +3,7 @@
 ;; Copyright (C) 2025 Diogo Doreto
 
 ;; Author: Diogo Doreto <diogo@doreto.com.br>
-;; Version: 1.1.0
+;; Version: 1.2.0
 ;; Keywords: convenience languages multimedia tools
 ;; Homepage: https://github.com/DiogoDoreto/emacs-tts
 ;; Package-Requires: ((emacs "29.1"))
@@ -66,6 +66,8 @@
 
 ;;; Changelog:
 
+;; - 1.2.0: Allow the customization of the extension of the generated audio
+;;          files. Also default to wav.
 ;; - 1.1.0: Write on the minibuffer when Kokoro server has started.
 
 ;;; Code:
@@ -73,6 +75,11 @@
 (require 'cl-lib)
 (require 'json)
 (require 'url)
+
+(defcustom tts-audio-extension "wav"
+  "The audio file extension that will be requested to the backend."
+  :type 'string
+  :group 'tts)
 
 (defcustom tts-backend 'kokoro
   "The TTS backend currently in use for generating audio from text."
@@ -281,7 +288,7 @@ Call CALLBACK with error or nil when done."
                      ("input" . ,text)
                      ("voice" . ,tts-kokoro-voice)
                      ("lang_code" . ,(string (aref tts-kokoro-voice 0)))
-                     ("response_format" . "mp3")
+                     ("response_format" . ,tts-audio-extension)
                      ("speed" . ,tts-kokoro-speed))))
          (cmd (list "curl" "-s" "-X" "POST"
                     "-H" "Content-Type: application/json"
@@ -437,7 +444,7 @@ stopped."
          (temp-file (make-temp-file (format "tts-%s-%d-"
                                             (tts--session-id session)
                                             chunk-index)
-                                    nil ".mp3")))
+                                    nil (concat "." tts-audio-extension))))
     (tts--log "tts--chunk-generate-audio"
               (format "Requesting chunk %d..." chunk-index))
     (setf (tts--chunk-file chunk) temp-file
